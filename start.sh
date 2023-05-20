@@ -1,0 +1,3 @@
+SKIP_DOCKER=true ./scripts/init_db.sh
+cargo run
+
