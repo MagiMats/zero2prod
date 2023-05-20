@@ -34,5 +34,3 @@ pub fn get_configuration() -> Result<Settings, config::ConfigError> {
     // our Settings type
     settings.try_into()
 }
-
-

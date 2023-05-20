@@ -1,4 +1,4 @@
-use sqlx::{Connection, PgConnection};
+use sqlx::PgPool;
 use std::net::TcpListener;
 use zero2prod::configuration;
 use zero2prod::startup;
@@ -6,7 +6,7 @@ use zero2prod::startup;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let configuration = configuration::get_configuration().expect("Failed to read config");
-    let connection = PgConnection::connect(&configuration.database.connection_string())
+    let connection = PgPool::connect(&configuration.database.connection_string())
         .await
         .expect("Failed to connect to Postgres");
 
