@@ -1,6 +1,7 @@
-use sqlx::{Connection, PgPool};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
-use zero2prod::configuration;
+use uuid::Uuid;
+use zero2prod::configuration::{self, DatabaseSettings};
 use zero2prod::startup;
 
 pub struct TestApp {
@@ -14,10 +15,9 @@ async fn spawn_app() -> TestApp {
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
 
-    let configuration = configuration::get_configuration().expect("Failed to read config");
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
-        .await
-        .expect("Failed to connect to Postgres");
+    let mut configuration = configuration::get_configuration().expect("Failed to read config");
+    configuration.database.database_name = Uuid::new_v4().to_string();
+    let connection_pool = configure_database(&configuration.database).await;
 
     let server = startup::run(listener, connection_pool.clone()).expect("Failed to bind address");
 
@@ -26,6 +26,30 @@ async fn spawn_app() -> TestApp {
         address,
         db_pool: connection_pool,
     }
+}
+
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+    // Create database
+    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Failed to connect to Postgres");
+
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Failed to create database.");
+
+    // Migrate database
+    let connection_pool = PgPool::connect(&config.connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+    sqlx::migrate!("./migrations")
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate the database");
+
+    connection_pool
 }
 
 #[tokio::test]
@@ -42,6 +66,7 @@ async fn health_check_works() {
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
 }
+
 
 #[tokio::test]
 async fn subscribe_returns_a_200_for_valid_form_data() {
