@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
-use tracing::{self, Instrument};
+use tracing;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
