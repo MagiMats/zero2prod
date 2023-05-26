@@ -16,7 +16,7 @@ name = "zero2prod"
 [dependencies]
 tracing = { version = "0.1", features = ["log"] }
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
-tracing-bunyan-formatter = "0.3"
+tracing-bunyan-formatter = "0.3.6"
 tracing-log = "0.1"
 actix-web = "4.3.1"
 reqwest = "0.11"
