@@ -1,4 +1,4 @@
-FROM rust:1.59.0
+FROM rust:1.69.0
 WORKDIR /app
 RUN apt update && apt install lld clang -y
 COPY . .
